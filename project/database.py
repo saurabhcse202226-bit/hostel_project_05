@@ -1,4 +1,5 @@
 import os
+import logging
 from collections.abc import Sequence
 from typing import Any
 
@@ -7,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from .settings import Settings
 
 db = SQLAlchemy()
+logger = logging.getLogger(__name__)
 try:
     from flask_migrate import Migrate
 
@@ -157,4 +159,8 @@ def init_db(app) -> None:
         from . import models  # noqa: F401
 
         if os.getenv("AUTO_CREATE_TABLES", "1").strip().lower() in {"1", "true", "yes", "on"}:
-            db.create_all()
+            try:
+                db.create_all()
+            except Exception as exc:
+                # Do not hard-fail app boot on transient DB startup issues.
+                logger.exception("Database auto-create skipped due to startup error: %s", exc)
