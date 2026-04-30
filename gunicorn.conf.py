@@ -1,6 +1,7 @@
 import os
 
-bind = os.environ.get("GUNICORN_BIND", "0.0.0.0:5000")
+port = os.environ.get("PORT", "5000")
+bind = os.environ.get("GUNICORN_BIND", f"0.0.0.0:{port}")
 workers = int(os.environ.get("GUNICORN_WORKERS", "2"))
 threads = int(os.environ.get("GUNICORN_THREADS", "2"))
 timeout = int(os.environ.get("GUNICORN_TIMEOUT", "120"))

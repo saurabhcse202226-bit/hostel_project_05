@@ -19,8 +19,6 @@ def create_app() -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = Settings.MAX_CONTENT_LENGTH
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-    print("App is starting...")  # debug print
-
     init_db(app)
 
     register_routes(app)
@@ -29,9 +27,6 @@ def create_app() -> Flask:
     return app
 
 
-app = create_app()
-
-
-# ✅ ADD THIS PART (IMPORTANT)
 if __name__ == "__main__":
+    app = create_app()
     app.run(host=Settings.HOST, port=Settings.PORT, debug=Settings.DEBUG)

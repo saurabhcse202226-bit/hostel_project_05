@@ -10,9 +10,11 @@ __pycache__/
 .env.*
 .webassets-cache
 
+# Database
+*.db
+
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-

@@ -1,14 +1,15 @@
 from flask import Flask
 
-from .routes.admin import admin_bp
-from .routes.auth import auth_bp
-from .routes.caretaker import caretaker_bp
-from .routes.principal import principal_bp
-from .routes.student import student_bp
-from .routes.warden import warden_bp
-
 
 def register_routes(app: Flask) -> None:
+    # Keep imports local to avoid import-order/circular-import issues at startup.
+    from .routes.admin import admin_bp
+    from .routes.auth import auth_bp
+    from .routes.caretaker import caretaker_bp
+    from .routes.principal import principal_bp
+    from .routes.student import student_bp
+    from .routes.warden import warden_bp
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(caretaker_bp)
