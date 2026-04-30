@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Student Dashboard</h1>
+  <span class="badge bg-blue" style="font-size:13px;padding:6px 14px;">{{ student['name'] or 'Student' }}</span>
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+{% if msg %}<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i>{{ msg }}</div>{% endif %}
+
+<!-- Profile + Fee -->
+<div class="g2 mb-16">
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="bi bi-person-badge" style="color:var(--accent);margin-right:6px;"></i>My Profile</div></div>
+    <div class="d-flex align-center gap-8 mb-16">
+      {% if student['image'] %}
+        <img src="{{ url_for('static', filename='uploads/' + student['image']) }}" alt="Photo" class="photo" style="width:72px;height:72px;border-radius:10px;">
+      {% else %}
+        <div class="avatar" style="width:72px;height:72px;font-size:24px;border-radius:10px;">{{ (student['name'] or 'S')[0].upper() }}</div>
+      {% endif %}
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;">{{ student['name'] or '-' }}</div>
+        <div style="color:var(--muted);font-size:13px;">{{ student['reg_no'] or '-' }}</div>
+      </div>
+    </div>
+    <div class="g2" style="font-size:13px;gap:10px;">
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Branch / Year</div><div>{{ student['branch'] or '-' }} / {{ student['year'] or '-' }}</div></div>
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Room / Bed</div><div>{{ student['room_no'] or '-' }} / {{ student['bed_no'] or '-' }}</div></div>
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Aadhar (Last 4)</div><div>{% if student['aadhar_no'] %}****{{ student['aadhar_no'][-4:] }}{% else %}-{% endif %}</div></div>
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Blood Group</div><div>{{ student['blood_group'] or '-' }}</div></div>
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Mobile</div><div>{{ student['mobile'] or '-' }}</div></div>
+      <div><div style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px;">Email</div><div>{{ student['email'] or '-' }}</div></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="card" style="flex:1;">
+      <div class="card-title mb-8"><i class="bi bi-credit-card" style="color:var(--accent);margin-right:6px;"></i>Fee Status</div>
+      {% if fee_status == 'Paid' %}
+        <span class="badge bg-success" style="font-size:14px;padding:6px 14px;"><i class="bi bi-check-circle-fill" style="margin-right:5px;"></i>Paid</span>
+      {% else %}
+        <span class="badge bg-danger" style="font-size:14px;padding:6px 14px;"><i class="bi bi-clock-fill" style="margin-right:5px;"></i>{{ fee_status }}</span>
+      {% endif %}
+    </div>
+    <div class="card" style="flex:1;">
+      <div class="card-title mb-8">Fee Portal</div>
+      <div class="d-flex gap-8">
+        <a href="https://erp.eshiksa.net/DirectFeesv3/GECS" target="_blank" class="btn btn-primary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Pay Now</a>
+        <a href="https://sites.google.com/gecsheohar.ac.in/hostel-mess-bill/home" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-search"></i> Track</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Latest Notices -->
+{% if latest_notices %}
+<div class="card mb-16">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-megaphone" style="color:var(--yellow);margin-right:6px;"></i>Latest Notices</div>
+    <a href="{{ url_for('notices') }}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+  {% for n in latest_notices %}
+    <div style="padding:12px 0;border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none;padding-bottom:0;{% endif %}">
+      <div style="font-weight:600;font-size:13.5px;">{{ n['title'] }}</div>
+      <div style="font-size:11.5px;color:var(--muted);margin:2px 0 4px;">{{ n['created_at'] }}</div>
+      <div style="font-size:13px;white-space:pre-wrap;color:var(--text);">{{ n['message'] }}</div>
+      {% if n['attachment'] %}<a href="{{ url_for('static', filename='uploads/'+n['attachment']) }}" target="_blank" class="btn btn-outline btn-xs mt-8"><i class="bi bi-paperclip"></i> Attachment</a>{% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Apply Leave -->
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-calendar-plus" style="color:var(--green);margin-right:6px;"></i>Apply for Leave</div></div>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="type" value="leave">
+    <div class="g3">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">Reason</label>
+        <input type="text" name="reason" class="form-control" placeholder="State your reason for leave" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">From Date</label>
+        <input type="date" name="from" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">To Date</label>
+        <input type="date" name="to" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Proof (optional)</label>
+        <input type="file" name="proof" class="form-control" accept=".png,.jpg,.jpeg,.pdf">
+      </div>
+    </div>
+    <button class="btn btn-primary"><i class="bi bi-send"></i> Submit Leave Request</button>
+  </form>
+</div>
+
+<!-- Leave History -->
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-clock-history" style="color:var(--accent);margin-right:6px;"></i>Leave History</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Warden</th><th>Principal</th></tr></thead>
+      <tbody>
+        {% for l in leaves %}
+        <tr>
+          <td>{{ l['id'] }}</td>
+          <td>{{ l['from_date'] }}</td>
+          <td>{{ l['to_date'] }}</td>
+          <td><strong>{{ l['total_days'] }}</strong></td>
+          <td><span class="truncate" title="{{ l['reason'] }}">{{ l['reason'] }}</span></td>
+          <td>{% if l['warden_status']=='Approved' %}<span class="badge bg-success">Approved</span>{% elif l['warden_status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+          <td>{% if l['principal_status']=='Approved' %}<span class="badge bg-success">Approved</span>{% elif l['principal_status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+        </tr>
+        {% else %}<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px;">No leave applications yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Complaint -->
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-chat-left-dots" style="color:var(--red);margin-right:6px;"></i>Submit Complaint</div></div>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="type" value="comp">
+    <div class="form-group">
+      <label class="form-label">Complaint Details</label>
+      <textarea name="msg" class="form-control" rows="3" placeholder="Describe your complaint in detail" required></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Attach Media (optional)</label>
+      <input type="file" name="media" class="form-control" accept=".png,.jpg,.jpeg,.pdf,.mp4,.webm,.mp3,.wav,.aac,.m4a">
+    </div>
+    <button class="btn btn-danger"><i class="bi bi-send"></i> Submit Complaint</button>
+  </form>
+</div>
+
+<!-- Complaint History -->
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-list-check" style="color:var(--muted);margin-right:6px;"></i>My Complaints</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Status</th><th>Complaint</th><th>Resolution</th></tr></thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td>{{ c['id'] }}</td>
+          <td>{% if c['status']=='Resolved' %}<span class="badge bg-success">Resolved</span>{% elif c['status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+          <td><span class="truncate" title="{{ c['complaint'] }}">{{ c['complaint'] }}</span></td>
+          <td><span class="truncate" title="{{ c['resolution'] or '' }}">{{ c['resolution'] or '—' }}</span></td>
+        </tr>
+        {% else %}<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:20px;">No complaints submitted yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Change Password -->
+<div class="card">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-shield-lock" style="color:var(--muted);margin-right:6px;"></i>Change Password</div></div>
+  <form method="POST">
+    <input type="hidden" name="type" value="pwd">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input type="password" class="form-control" name="current_password" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" class="form-control" name="new_password" placeholder="Min 6 characters" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input type="password" class="form-control" name="confirm_password" required>
+      </div>
+    </div>
+    <button class="btn btn-secondary"><i class="bi bi-lock"></i> Update Password</button>
+  </form>
+</div>
+{% endblock %}

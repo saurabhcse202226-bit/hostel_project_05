@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>{{ role|capitalize }} Leave Approvals</h1>
+  {% if role == 'warden' %}
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('warden_leaves_export') }}"><i class="bi bi-download"></i> Export CSV</a>
+  {% else %}
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('principal_leaves_export') }}"><i class="bi bi-download"></i> Export CSV</a>
+  {% endif %}
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Total Requests</div><div class="stat-value">{{ stats['total'] }}</div><i class="bi bi-calendar stat-icon"></i></div>
+  <div class="stat-card yellow"><div class="stat-label">Pending</div><div class="stat-value">{{ stats['pending'] }}</div><i class="bi bi-clock stat-icon"></i></div>
+  <div class="stat-card green"><div class="stat-label">Approved</div><div class="stat-value">{{ stats['approved'] }}</div><i class="bi bi-check-circle stat-icon"></i></div>
+  <div class="stat-card red"><div class="stat-label">Rejected</div><div class="stat-value">{{ stats['rejected'] }}</div><i class="bi bi-x-circle stat-icon"></i></div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-list-ul" style="margin-right:6px;color:var(--accent);"></i>Leave Requests</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Student</th><th>Reg No</th><th>Room</th><th>Year</th>
+          <th>From</th><th>To</th><th>Days</th><th>Reason</th>
+          <th>Warden</th><th>Principal</th><th style="min-width:260px;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in leaves %}
+        <tr>
+          <td>{{ l['id'] }}</td>
+          <td><strong>{{ l['student_name'] or '-' }}</strong></td>
+          <td>{{ l['reg_no'] }}</td>
+          <td>{{ l['room_no'] or '-' }}</td>
+          <td>{{ l['year'] or '-' }}</td>
+          <td>{{ l['from_date'] }}</td>
+          <td>{{ l['to_date'] }}</td>
+          <td><strong>{{ l['total_days'] }}</strong></td>
+          <td><span class="truncate" title="{{ l['reason'] }}">{{ l['reason'] }}</span></td>
+          <td>{% if l['warden_status']=='Approved' %}<span class="badge bg-success">Approved</span>{% elif l['warden_status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+          <td>{% if l['principal_status']=='Approved' %}<span class="badge bg-success">Approved</span>{% elif l['principal_status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>{% else %}<span class="badge bg-secondary">Pending</span>{% endif %}</td>
+          <td>
+            <form method="post" class="d-flex gap-8" style="align-items:center;">
+              <input type="hidden" name="leave_id" value="{{ l['id'] }}">
+              <input type="text" name="remark" class="form-control form-control-sm" placeholder="Remark" style="min-width:90px;">
+              <button class="btn btn-success btn-sm" name="action" value="approve"><i class="bi bi-check"></i></button>
+              <button class="btn btn-danger btn-sm" name="action" value="reject"><i class="bi bi-x"></i></button>
+            </form>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="12" style="color:var(--muted);text-align:center;padding:24px;">No leave requests found.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-graph-up" style="color:var(--accent);margin-right:8px;"></i>Hostel Analytics & Dashboard</h1></div>
+
+<!-- Student Statistics -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-label">Total Students</div>
+    <div class="stat-value">{{ student_stats['total'] or 0 }}</div>
+    <i class="bi bi-people stat-icon"></i>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Fee Paid</div>
+    <div class="stat-value">{{ student_stats['fee_paid'] or 0 }}</div>
+    <i class="bi bi-check-circle stat-icon"></i>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-label">Fee Pending</div>
+    <div class="stat-value">{{ student_stats['fee_pending'] or 0 }}</div>
+    <i class="bi bi-clock stat-icon"></i>
+  </div>
+  <div class="stat-card teal">
+    <div class="stat-label">Total Mess</div>
+    <div class="stat-value">{{ mess_count }}</div>
+    <i class="bi bi-shop stat-icon"></i>
+  </div>
+</div>
+
+<!-- Room & Occupancy -->
+<div class="g2 mb-16">
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="bi bi-building" style="color:var(--accent);margin-right:6px;"></i>Room Occupancy</div></div>
+    <div style="margin:16px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span>Occupancy Rate</span>
+        <strong style="font-size:18px;">{% set occ_pct = ((room_stats['occupied_beds'] or 0) * 100 / (room_stats['total_beds'] or 1)) | int %}{{ occ_pct }}%</strong>
+      </div>
+      <div style="width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+        <div style="width:{{ occ_pct }}%;height:100%;background:{% if occ_pct > 90 %}var(--red){% elif occ_pct > 70 %}var(--yellow){% else %}var(--green){% endif %};"></div>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);">
+        <div>Occupied: <strong>{{ room_stats['occupied_beds'] or 0 }}</strong> / {{ room_stats['total_beds'] or 0 }} beds</div>
+        <div>Total Rooms: <strong>{{ room_stats['total_rooms'] or 0 }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="bi bi-chat-left-dots" style="color:var(--accent);margin-right:6px;"></i>Complaints Summary</div></div>
+    <div style="padding:12px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>Pending</span>
+        <strong style="color:var(--warning);">{{ complaint_stats.get('Pending', 0) }}</strong>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>Resolved</span>
+        <strong style="color:var(--green);">{{ complaint_stats.get('Resolved', 0) }}</strong>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+        <span>Rejected</span>
+        <strong style="color:var(--red);">{{ complaint_stats.get('Rejected', 0) }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Maintenance Summary -->
+<div class="card">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-tools" style="color:var(--accent);margin-right:6px;"></i>Maintenance Requests</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:12px 0;">
+    <div style="text-align:center;padding:12px;background:var(--surface);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--yellow);">{{ maintenance_stats.get('Pending', 0) }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Pending</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--surface);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--blue);">{{ maintenance_stats.get('In Progress', 0) }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">In Progress</div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--surface);border-radius:8px;">
+      <div style="font-size:24px;font-weight:700;color:var(--green);">{{ maintenance_stats.get('Resolved', 0) }}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">Resolved</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

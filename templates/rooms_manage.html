@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1>Room Management</h1></div>
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Add New Room</div></div>
+  <form method="POST">
+    <div class="g4">
+      <div class="form-group"><label class="form-label">Block Name</label><input class="form-control" name="block_name" placeholder="e.g. A" required></div>
+      <div class="form-group"><label class="form-label">Floor No</label><input class="form-control" name="floor_no" placeholder="e.g. 1" required></div>
+      <div class="form-group"><label class="form-label">Room No</label><input class="form-control" name="room_no" placeholder="e.g. 101" required></div>
+      <div class="form-group"><label class="form-label">Total Beds</label><input class="form-control" name="total_beds" type="number" min="1" placeholder="4" required></div>
+    </div>
+    <button class="btn btn-primary btn-sm mt-8"><i class="bi bi-plus"></i> Add Room</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-building" style="color:var(--accent);margin-right:6px;"></i>All Rooms</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Block</th><th>Floor</th><th>Room</th><th>Total Beds</th><th>Occupied</th><th>Available</th></tr></thead>
+      <tbody>
+        {% for r in rooms %}
+        <tr>
+          <td><strong>{{ r['block_name'] }}</strong></td>
+          <td>{{ r['floor_no'] }}</td>
+          <td>{{ r['room_no'] }}</td>
+          <td>{{ r['total_beds'] }}</td>
+          <td>{{ r['occupied_beds'] }}</td>
+          <td>
+            {% set available = r['total_beds'] - r['occupied_beds'] %}
+            {% if available > 0 %}<span class="badge bg-success">{{ available }} free</span>
+            {% else %}<span class="badge bg-danger">Full</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">No rooms added yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

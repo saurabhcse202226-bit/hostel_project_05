@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1>Notices</h1></div>
+
+{% if data %}
+  {% for n in data %}
+  <div class="card mb-16">
+    <div class="d-flex justify-between align-center mb-8">
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;">{{ n['title'] }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">Posted by {{ n['posted_by'] or 'Admin' }} &nbsp;·&nbsp; {{ n['created_at'] }}</div>
+      </div>
+      {% if n['attachment'] %}
+        <a href="{{ url_for('static', filename='uploads/'+n['attachment']) }}" target="_blank" class="btn btn-outline btn-sm"><i class="bi bi-paperclip"></i> Attachment</a>
+      {% endif %}
+    </div>
+    <p style="white-space:pre-wrap;font-size:13.5px;line-height:1.7;color:var(--text);">{{ n['message'] }}</p>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="card" style="text-align:center;padding:48px;">
+    <i class="bi bi-megaphone" style="font-size:48px;color:var(--border);display:block;margin-bottom:12px;"></i>
+    <div style="color:var(--muted);">No notices posted yet.</div>
+  </div>
+{% endif %}
+{% endblock %}

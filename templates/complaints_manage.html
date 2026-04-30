@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>{% if role=='warden' %}Warden{% elif role=='principal' %}Principal{% else %}Caretaker{% endif %} Complaints</h1>
+  {% if role != 'warden' and role != 'principal' %}
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('caretaker_complaints_export') }}"><i class="bi bi-download"></i> Export CSV</a>
+  {% endif %}
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Total</div><div class="stat-value">{{ stats['total'] }}</div><i class="bi bi-chat-left-dots stat-icon"></i></div>
+  <div class="stat-card yellow"><div class="stat-label">Pending</div><div class="stat-value">{{ stats['pending'] }}</div><i class="bi bi-clock stat-icon"></i></div>
+  <div class="stat-card green"><div class="stat-label">Resolved</div><div class="stat-value">{{ stats['resolved'] }}</div><i class="bi bi-check-circle stat-icon"></i></div>
+  <div class="stat-card red"><div class="stat-label">Rejected</div><div class="stat-value">{{ stats['rejected'] }}</div><i class="bi bi-x-circle stat-icon"></i></div>
+</div>
+
+<div class="card">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-list-ul" style="margin-right:6px;color:var(--accent);"></i>Complaint List</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Student</th><th>Reg No</th><th>Status</th><th>Complaint</th><th style="min-width:320px;">Update</th></tr></thead>
+      <tbody>
+        {% for c in complaints %}
+        <tr>
+          <td>{{ c['id'] }}</td>
+          <td><strong>{{ c['student_name'] or '-' }}</strong></td>
+          <td>{{ c['reg_no'] }}</td>
+          <td>
+            {% if c['status']=='Resolved' %}<span class="badge bg-success">Resolved</span>
+            {% elif c['status']=='Rejected' %}<span class="badge bg-danger">Rejected</span>
+            {% elif 'Forwarded' in (c['status'] or '') %}<span class="badge bg-info">Forwarded</span>
+            {% else %}<span class="badge bg-secondary">Pending</span>{% endif %}
+          </td>
+          <td><span class="truncate" title="{{ c['complaint'] }}">{{ c['complaint'] }}</span></td>
+          <td>
+            {% if role == 'warden' or role == 'principal' %}
+            <form method="post" class="d-flex gap-8" style="align-items:center;">
+              <input type="hidden" name="complaint_id" value="{{ c['id'] }}">
+              {% if role == 'warden' %}
+              <select name="action" class="form-select form-select-sm" style="min-width:140px;">
+                <option value="pending" {% if c['status']=='Pending' %}selected{% endif %}>Pending</option>
+                <option value="resolved" {% if c['status']=='Resolved' %}selected{% endif %}>Resolved</option>
+                <option value="rejected" {% if c['status']=='Rejected' %}selected{% endif %}>Rejected</option>
+                <option value="forward" {% if c['status']=='Forwarded to Principal' %}selected{% endif %}>Forward to Principal</option>
+              </select>
+              {% elif role == 'principal' %}
+              <select name="action" class="form-select form-select-sm" style="min-width:120px;">
+                <option value="pending">Pending</option>
+                <option value="resolved" {% if c['status']=='Resolved' %}selected{% endif %}>Resolved</option>
+                <option value="rejected" {% if c['status']=='Rejected' %}selected{% endif %}>Rejected</option>
+              </select>
+              {% endif %}
+              <input type="text" name="resolution" class="form-control form-control-sm" placeholder="Resolution note" value="{{ c['resolution'] or '' }}">
+              <button class="btn btn-primary btn-sm"><i class="bi bi-check2"></i> Save</button>
+            </form>
+            {% else %}
+              <span class="truncate" title="{{ c['resolution'] or '' }}">{{ c['resolution'] or '—' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">No complaints yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

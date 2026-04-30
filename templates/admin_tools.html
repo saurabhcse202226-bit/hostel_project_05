@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Admin Tools</h1>
+  <div class="d-flex gap-8">
+    <a class="btn btn-outline btn-sm" href="{{ url_for('admin.admin_db_view') }}"><i class="bi bi-table"></i> DB Viewer</a>
+    <a class="btn btn-outline-success btn-sm" href="{{ url_for('admin_backup') }}"><i class="bi bi-download"></i> Download
+      DB Backup</a>
+  </div>
+</div>
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i
+    class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="g3 mb-16">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="bi bi-database-up" style="color:var(--accent);margin-right:6px;"></i>Restore
+        Database</div>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">Upload a backup .db file. This uploads a new file
+      and does not overwrite the current DB automatically.</p>
+    <form method="post" action="{{ url_for('admin_restore') }}" enctype="multipart/form-data">
+      <div class="form-group"><input class="form-control" type="file" name="db_file" accept=".db" required></div>
+      <button class="btn btn-danger btn-sm"><i class="bi bi-upload"></i> Upload Restore DB</button>
+    </form>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--muted);">Current path: <code>{{ db_path }}</code></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="bi bi-person-lock" style="color:var(--yellow);margin-right:6px;"></i>Reset
+        Student Password</div>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">Resets to default: password = Reg No</p>
+    <form method="post">
+      <input type="hidden" name="action" value="reset_student_password">
+      <div class="form-group"><label class="form-label">Reg No</label><input class="form-control" name="reg_no"
+          placeholder="Student Reg No" required></div>
+      <button class="btn btn-primary btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="bi bi-shield-lock" style="color:var(--green);margin-right:6px;"></i>Reset Staff
+        Password</div>
+    </div>
+    <form method="post">
+      <input type="hidden" name="action" value="reset_staff_password">
+      <div class="form-group"><label class="form-label">Username</label><input class="form-control" name="username"
+          placeholder="caretaker / warden / principal" required></div>
+      <div class="form-group"><label class="form-label">New Password</label><input class="form-control"
+          name="new_password" placeholder="New password" required></div>
+      <button class="btn btn-primary btn-sm"><i class="bi bi-check"></i> Update Password</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-journal-text" style="color:var(--muted);margin-right:6px;"></i>Audit Logs
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Actor</th>
+          <th>Action</th>
+          <th>Entity</th>
+          <th>ID</th>
+          <th>Details</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in audit_logs %}
+        <tr>
+          <td>{{ a['id'] }}</td>
+          <td><code>{{ a['actor_role'] }}/{{ a['actor_user'] }}</code></td>
+          <td>{{ a['action'] }}</td>
+          <td>{{ a['entity'] }}</td>
+          <td>{{ a['entity_id'] }}</td>
+          <td><span class="truncate" title="{{ a['details'] }}">{{ a['details'] }}</span></td>
+          <td style="color:var(--muted);font-size:12px;">{{ a['created_at'] }}</td>
+        </tr>
+        {% else %}<tr>
+          <td colspan="7" style="color:var(--muted);text-align:center;padding:24px;">No audit logs yet.</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

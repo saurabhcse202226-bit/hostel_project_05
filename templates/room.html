@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-door-open"></i> Floor {{ floor }} — Rooms</h1>
+  <a href="{{ url_for('floors_visual') }}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back to Floors</a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;">
+  {% if rooms %}
+    {% for r in rooms %}
+      <a href="{{ url_for('room_students', room_id=r['id']) }}" style="text-decoration:none;">
+        <div style="padding:16px;border-radius:10px;border:2px solid var(--border);background:
+          {%- if r['occupied_beds']|int >= r['total_beds']|int -%}
+            #fee2e2
+          {%- elif r['occupied_beds']|int > 0 -%}
+            #fef3c7
+          {%- else -%}
+            #d1fae5
+          {%- endif %};text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px;">
+          <i class="bi bi-door-closed" style="font-size:24px;color:var(--navy2);"></i>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:var(--text);text-align:center;">{{ r['block_name'] }}-{{ r['room_no'] }}</div>
+          <div style="font-size:12px;color:var(--muted);font-weight:600;">{{ r['occupied_beds'] }}/{{ r['total_beds'] }} beds</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;">
+            {%- if r['occupied_beds']|int >= r['total_beds']|int -%}
+              FULL
+            {%- elif r['occupied_beds']|int > 0 -%}
+              Partial
+            {%- else -%}
+              Available
+            {%- endif %}
+          </div>
+        </div>
+      </a>
+    {% endfor %}
+  {% else %}
+    <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted);">
+      <i class="bi bi-inbox" style="font-size:48px;opacity:0.3;display:block;margin-bottom:12px;"></i>
+      No rooms on this floor.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

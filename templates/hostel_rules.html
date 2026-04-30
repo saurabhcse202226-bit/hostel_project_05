@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-file-earmark-rules" style="color:var(--accent);margin-right:8px;"></i>Hostel Rules & Regulations</h1></div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+{% if session.role in ['warden', 'principal'] %}
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Add Rule</div></div>
+  <form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="g2">
+      <div class="form-group"><label class="form-label">Category</label><select class="form-select" name="category" required><option value="">Select Category</option><option value="General">General</option><option value="Discipline">Discipline</option><option value="Room Rules">Room Rules</option><option value="Curfew">Curfew</option><option value="Guest Policy">Guest Policy</option><option value="Noise">Noise & Disturbance</option><option value="Safety">Safety</option><option value="Other">Other</option></select></div>
+      <div class="form-group"><label class="form-label">Rule Text</label><textarea class="form-control" name="rule" rows="2" placeholder="State the rule clearly..." required></textarea></div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-plus"></i> Add Rule</button>
+  </form>
+</div>
+{% endif %}
+
+<div>
+  {% set current_category = '' %}
+  {% for r in rules %}
+    {% if r['category'] != current_category %}
+      {% if current_category != '' %}</div>{% endif %}
+      {% set current_category = r['category'] %}
+      <div class="card mb-16">
+      <div class="card-hd"><div class="card-title" style="text-transform:capitalize;">{{ r['category'] }}</div></div>
+      <div style="padding:12px 0;">
+    {% endif %}
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);{% if loop.last or rules[loop.index0 + 1]['category'] != current_category %}border-bottom:none;{% endif %}">
+      <div style="font-size:13.5px;line-height:1.6;">{{ r['rule_text'] }}</div>
+    </div>
+  {% endfor %}
+  {% if current_category %}
+    </div></div>
+  {% endif %}
+
+  {% if not rules %}
+  <div class="card" style="text-align:center;padding:48px;">
+    <i class="bi bi-file-earmark-rules" style="font-size:48px;color:var(--border);display:block;margin-bottom:12px;"></i>
+    <div style="color:var(--muted);">No rules configured yet.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

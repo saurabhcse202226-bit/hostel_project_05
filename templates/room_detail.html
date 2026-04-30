@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Room {{ room['block_name'] }}-{{ room['floor_no'] }}-{{ room['room_no'] }}</h1>
+  <a href="{{ url_for('floors_visual') }}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="card">
+  <div class="card-hd"><div class="card-title">Students in this room</div><span class="badge bg-blue">{{ students|length }}/{{ room['total_beds'] }} beds</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Reg No</th><th>Bed</th><th>Year</th><th>Mobile</th></tr></thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><strong>{{ s['name'] or '-' }}</strong></td>
+          <td>{{ s['reg_no'] or '-' }}</td>
+          <td>{{ s['bed_no'] or '-' }}</td>
+          <td>{{ s['year'] or '-' }}</td>
+          <td>{{ s['mobile'] or '-' }}</td>
+        </tr>
+        {% else %}<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">No students in this room.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

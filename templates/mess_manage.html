@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-shop" style="color:var(--accent);margin-right:8px;"></i>Mess Management</h1>
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Total Mess</div><div class="stat-value">{{ stats['total_mess'] }}</div><i class="bi bi-shop stat-icon"></i></div>
+  <div class="stat-card green"><div class="stat-label">Active</div><div class="stat-value">{{ stats['active'] }}</div><i class="bi bi-check-circle stat-icon"></i></div>
+</div>
+
+<!-- Add Mess -->
+<div class="card mb-16">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Register New Mess</div>
+  </div>
+  <form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Mess Name</label>
+        <input class="form-control" name="mess_name" placeholder="e.g. North Block Mess" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location</label>
+        <input class="form-control" name="location" placeholder="Building or area name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Person</label>
+        <input class="form-control" name="contact_person" placeholder="Manager/Coordinator name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Mobile</label>
+        <input class="form-control" name="contact_mobile" placeholder="10-digit mobile number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monthly Fee (₹)</label>
+        <input class="form-control" name="monthly_fee" type="number" step="100" placeholder="e.g. 3500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Capacity (Students)</label>
+        <input class="form-control" name="capacity" type="number" placeholder="e.g. 50" value="100">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-plus"></i> Add Mess</button>
+  </form>
+</div>
+
+<!-- Mess List -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-table" style="color:var(--accent);margin-right:6px;"></i>All Mess</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Mess Name</th><th>Location</th><th>Contact</th><th>Monthly Fee</th><th>Capacity</th><th>Enrolled</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for m in mess_list %}
+        <tr>
+          <td>{{ m['id'] }}</td>
+          <td><strong>{{ m['mess_name'] }}</strong></td>
+          <td>{{ m['location'] or '—' }}</td>
+          <td>
+            <div style="font-size:12px;">{{ m['contact_person'] or '—' }}</div>
+            <div style="font-size:11px;color:var(--muted);">{{ m['contact_mobile'] or '—' }}</div>
+          </td>
+          <td><strong>₹{{ m['monthly_fee'] }}</strong></td>
+          <td>{{ m['capacity'] }}</td>
+          <td>
+            {% set occupied = m['enrolled_students'] %}
+            {% set pct = (occupied * 100 / m['capacity']) | int %}
+            <div style="font-size:12px;"><strong>{{ occupied }}</strong>/{{ m['capacity'] }}</div>
+            <div style="width:60px;height:4px;background:var(--border);border-radius:2px;margin-top:4px;">
+              <div style="width:{{ pct }}%;height:100%;background:{% if pct > 90 %}var(--red){% elif pct > 70 %}var(--yellow){% else %}var(--green){% endif %};border-radius:2px;"></div>
+            </div>
+          </td>
+          <td>
+            <form method="POST" style="display:flex;align-items:center;gap:6px;">
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="mess_id" value="{{ m['id'] }}">
+              <select name="status" class="form-select form-select-sm" style="min-width:100px;" onchange="this.form.submit()">
+                <option value="Active" {% if m['status']=='Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if m['status']=='Inactive' %}selected{% endif %}>Inactive</option>
+              </select>
+            </form>
+          </td>
+          <td>
+            <a href="{{ url_for('mess_delete', mess_id=m['id']) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this mess?')"><i class="bi bi-trash3"></i></a>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px;">No mess registered yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Student Management</h1>
+  <div></div>
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Total Students</div><div class="stat-value">{{ stats['total_students'] }}</div><i class="bi bi-people stat-icon"></i></div>
+  <div class="stat-card red"><div class="stat-label">Fee Pending</div><div class="stat-value">{{ stats['fee_pending'] }}</div><i class="bi bi-credit-card stat-icon"></i></div>
+  <div class="stat-card yellow"><div class="stat-label">Pending Complaints</div><div class="stat-value">{{ stats['complaints_pending'] }}</div><i class="bi bi-chat-left-dots stat-icon"></i></div>
+  <div class="stat-card teal"><div class="stat-label">Pending Leaves</div><div class="stat-value">{{ stats['leaves_pending'] }}</div><i class="bi bi-calendar-check stat-icon"></i></div>
+</div>
+
+<!-- Students on Leave -->
+<div class="card mb-16">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-person-walking" style="color:var(--yellow);margin-right:6px;"></i>Currently on Leave</div>
+    <span class="badge bg-secondary">Today</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Reg No</th><th>Room</th><th>From</th><th>To</th><th>Reason</th></tr></thead>
+      <tbody>
+        {% for l in current_leaves %}
+        <tr>
+          <td><strong>{{ l['student_name'] or '-' }}</strong></td>
+          <td>{{ l['reg_no'] }}</td>
+          <td>{{ l['student_room'] or '-' }}</td>
+          <td>{{ l['from_date'] }}</td>
+          <td>{{ l['to_date'] }}</td>
+          <td><span class="truncate" title="{{ l['reason'] }}">{{ l['reason'] }}</span></td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px;">No approved leaves running today.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-search" style="color:var(--muted);margin-right:6px;"></i>Search Students</div></div>
+  <form method="get">
+    <div class="g4" style="gap:10px;">
+      <div><input type="text" name="q" class="form-control" placeholder="Name / Reg No" value="{{ request.args.get('q','') }}"></div>
+      <div><input type="text" name="year" class="form-control" placeholder="Year" value="{{ request.args.get('year','') }}"></div>
+      <div><input type="text" name="room" class="form-control" placeholder="Room No" value="{{ request.args.get('room','') }}"></div>
+      <div>
+        <select name="fee" class="form-select">
+          <option value="">Fee (Any)</option>
+          <option value="Paid" {% if request.args.get('fee')=='Paid' %}selected{% endif %}>Paid</option>
+          <option value="Pending" {% if request.args.get('fee')=='Pending' %}selected{% endif %}>Pending</option>
+          <option value="Partiallypaid" {% if request.args.get('fee')=='Partiallypaid' %}selected{% endif %}>Partially Paid</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex gap-8 mt-12">
+      <button class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Search</button>
+      <a href="{{ url_for('caretaker_dashboard') }}" class="btn btn-outline btn-sm">Clear</a>
+    </div>
+  </form>
+</div>
+
+<!-- Student Registration -->
+<div class="card mb-16">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-person-plus" style="color:var(--green);margin-right:6px;"></i>Register New Student</div>
+    <span style="font-size:12px;color:var(--muted);">Default password: Reg No</span>
+  </div>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" name="name" placeholder="Student full name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Registration No</label>
+        <input class="form-control" name="reg_no" placeholder="Unique reg number" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aadhar No</label>
+        <input class="form-control" name="aadhar_no" placeholder="12-digit Aadhar number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-select" name="blood_group">
+          <option value="">Select Blood Group</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Branch</label>
+        <input class="form-control" name="branch" placeholder="CSE / ECE / ME ...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <input class="form-control" name="year" placeholder="1 / 2 / 3 / 4">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allotment Date</label>
+        <input class="form-control" name="allot_date" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Select Room</label>
+        <select class="form-select" name="room_id">
+          <option value="">-- Select Room --</option>
+          {% for r in all_rooms %}
+            {% set available = r['total_beds'] - r['occupied_beds'] %}
+            <option value="{{ r['id'] }}" {% if available <= 0 %}disabled title="Room full"{% endif %}>
+              {{ r['block_name'] }}-{{ r['floor_no'] }}-{{ r['room_no'] }} ({{ r['occupied_beds'] }}/{{ r['total_beds'] }} beds)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bed No</label>
+        <input class="form-control" name="bed_no" placeholder="e.g. B1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile</label>
+        <input class="form-control" name="mobile" placeholder="Student mobile">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" name="email" type="email" placeholder="Student email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Father Name</label>
+        <input class="form-control" name="father_name" placeholder="Father's name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Father Mobile</label>
+        <input class="form-control" name="father_mobile" placeholder="Father's mobile">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-control" name="address" placeholder="Home address">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remark</label>
+        <input class="form-control" name="remark" placeholder="Optional remark">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fee Status</label>
+        <select class="form-select" name="fee_status">
+          <option value="Pending">Pending</option>
+          <option value="Paid">Paid</option>
+          <option value="Partiallypaid">Partially Paid</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mess Assignment (optional)</label>
+        <select class="form-select" name="mess_id">
+          <option value="">-- No Mess --</option>
+          {% for m in all_mess %}
+            <option value="{{ m['id'] }}">{{ m['mess_name'] }} - ₹{{ m['monthly_fee'] }}/month</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Photo</label>
+        <input class="form-control" type="file" name="image" accept=".png,.jpg,.jpeg">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-person-plus"></i> Register Student</button>
+  </form>
+</div>
+
+<!-- Student List -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-table" style="color:var(--accent);margin-right:6px;"></i>Student List</div>
+    <input type="text" class="form-control form-control-sm" style="width:200px;" placeholder="Quick filter…" data-table-filter="studentTable">
+  </div>
+  <div class="table-wrap">
+    <table id="studentTable">
+      <thead><tr><th>Student</th><th>Reg No</th><th>Branch</th><th>Year</th><th>Room</th><th>Mobile</th><th>Fee</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for s in data %}
+        <tr>
+          <td>
+            <div class="d-flex align-center gap-8">
+              {% if s['image'] %}
+                <img src="{{ url_for('static', filename='uploads/'+s['image']) }}" class="photo" style="width:32px;height:32px;border-radius:6px;" alt="">
+              {% else %}
+                <div class="avatar" style="width:32px;height:32px;font-size:11px;border-radius:6px;">{{ (s['name'] or 'S')[0].upper() }}</div>
+              {% endif %}
+              <strong>{{ s['name'] or '-' }}</strong>
+            </div>
+          </td>
+          <td>{{ s['reg_no'] or '-' }}</td>
+          <td>{{ s['branch'] or '-' }}</td>
+          <td>{{ s['year'] or '-' }}</td>
+          <td>{{ s['room_no'] or '-' }}</td>
+          <td>{{ s['mobile'] or '-' }}</td>
+          <td>
+            {% if s['fee_status']=='Paid' %}<span class="badge bg-success">Paid</span>
+            {% elif s['fee_status']=='Partiallypaid' %}<span class="badge bg-warning">Partial</span>
+            {% else %}<span class="badge bg-danger">Pending</span>{% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-8">
+              <a href="{{ url_for('edit_student', student_id=s['id']) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+              <a href="{{ url_for('delete_student', student_id=s['id']) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Move to trash?')"><i class="bi bi-trash3"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px;">No students found.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

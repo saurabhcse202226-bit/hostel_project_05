@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-person-check" style="color:var(--accent);margin-right:8px;"></i>Visitor Management</h1></div>
+{% set can_log = (session.role == 'caretaker' or session.role == 'warden') %}
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+{% if not can_log %}
+<div class="alert alert-info"><i class="bi bi-eye"></i>Read-only view. You can see visitor logs{% if session.role == 'student' %} for your Reg No{% endif %}.</div>
+{% endif %}
+
+{% if can_log %}
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Log Visitor Entry</div></div>
+  <form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="g3">
+      <div class="form-group"><label class="form-label">Student Reg No</label><input class="form-control" name="student_reg" placeholder="e.g. CSE001" required></div>
+      <div class="form-group"><label class="form-label">Visitor Name</label><input class="form-control" name="visitor_name" placeholder="Full name" required></div>
+      <div class="form-group"><label class="form-label">Relation</label><input class="form-control" name="relation" placeholder="Parent / Friend / Sibling"></div>
+      <div class="form-group"><label class="form-label">Mobile</label><input class="form-control" name="mobile" placeholder="10-digit mobile" required></div>
+      <div class="form-group"><label class="form-label">Visit Date</label><input class="form-control" name="visit_date" type="date" required></div>
+      <div class="form-group"><label class="form-label">Check-In Time</label><input class="form-control" name="check_in" type="time" required></div>
+      <div class="form-group"><label class="form-label">Check-Out Time</label><input class="form-control" name="check_out" type="time"></div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-plus"></i> Log Visitor</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-hd"><div class="card-title">{% if session.role == 'student' %}My Visitor Log{% else %}Recent Visitors{% endif %}</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student Reg</th><th>Visitor Name</th><th>Relation</th><th>Mobile</th><th>Visit Date</th><th>Check-In</th><th>Check-Out</th></tr></thead>
+      <tbody>
+        {% for v in visitors %}
+        <tr>
+          <td>{{ v['student_reg'] }}</td>
+          <td><strong>{{ v['visitor_name'] }}</strong></td>
+          <td>{{ v['relation'] or '—' }}</td>
+          <td>{{ v['mobile'] }}</td>
+          <td>{{ v['visit_date'] }}</td>
+          <td>{{ v['check_in'] or '—' }}</td>
+          <td>{{ v['check_out'] or '—' }}</td>
+        </tr>
+        {% else %}<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px;">No visitor logs.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

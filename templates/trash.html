@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1>Trash</h1><span style="font-size:13px;color:var(--muted);">Soft-deleted students</span></div>
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Reg No</th><th>Branch</th><th>Year</th><th>Room</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for s in data %}
+        <tr>
+          <td><strong>{{ s['name'] or '-' }}</strong></td>
+          <td>{{ s['reg_no'] or '-' }}</td>
+          <td>{{ s['branch'] or '-' }}</td>
+          <td>{{ s['year'] or '-' }}</td>
+          <td>{{ s['room_no'] or '-' }}</td>
+          <td style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a href="{{ url_for('restore', student_id=s['id']) }}" class="btn btn-success btn-sm"><i class="bi bi-arrow-counterclockwise"></i> Restore</a>
+            <a href="{{ url_for('trash_delete', student_id=s['id']) }}" class="btn btn-danger btn-sm"
+               onclick="return confirm('Permanent delete? This cannot be undone.');">
+              <i class="bi bi-trash"></i> Delete
+            </a>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">Trash is empty.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

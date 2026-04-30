@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1>Edit Student</h1>
+  <a href="{{ url_for('caretaker_dashboard') }}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+<div class="card">
+  <form method="POST" enctype="multipart/form-data">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" name="name" value="{{ s['name'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Branch</label>
+        <input class="form-control" name="branch" value="{{ s['branch'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <input class="form-control" name="year" value="{{ s['year'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aadhar No</label>
+        <input class="form-control" name="aadhar_no" placeholder="12-digit Aadhar" value="{{ s['aadhar_no'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-select" name="blood_group">
+          <option value="">Select Blood Group</option>
+          <option value="O+" {% if s['blood_group']=='O+' %}selected{% endif %}>O+</option>
+          <option value="O-" {% if s['blood_group']=='O-' %}selected{% endif %}>O-</option>
+          <option value="A+" {% if s['blood_group']=='A+' %}selected{% endif %}>A+</option>
+          <option value="A-" {% if s['blood_group']=='A-' %}selected{% endif %}>A-</option>
+          <option value="B+" {% if s['blood_group']=='B+' %}selected{% endif %}>B+</option>
+          <option value="B-" {% if s['blood_group']=='B-' %}selected{% endif %}>B-</option>
+          <option value="AB+" {% if s['blood_group']=='AB+' %}selected{% endif %}>AB+</option>
+          <option value="AB-" {% if s['blood_group']=='AB-' %}selected{% endif %}>AB-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room</label>
+        <select class="form-select" name="room_id" required>
+          <option value="">Select Room</option>
+          {% for r in all_rooms %}
+            {% set lbl = r['block_name']~'-'~r['floor_no']~'-'~r['room_no'] %}
+            <option value="{{ r['id'] }}" {% if s['room_no']==lbl %}selected{% endif %}>{{ lbl }} ({{ r['occupied_beds'] }}/{{ r['total_beds'] }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bed No</label>
+        <input class="form-control" name="bed_no" value="{{ s['bed_no'] or '' }}" placeholder="e.g. B1" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile</label>
+        <input class="form-control" name="mobile" value="{{ s['mobile'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" name="email" value="{{ s['email'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-control" name="address" value="{{ s['address'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remark</label>
+        <input class="form-control" name="remark" value="{{ s['remark'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Father Name</label>
+        <input class="form-control" name="father_name" value="{{ s['father_name'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Father Mobile</label>
+        <input class="form-control" name="father_mobile" value="{{ s['father_mobile'] or '' }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fee Status</label>
+        <select class="form-select" name="fee_status">
+          <option value="Pending" {% if s['fee_status']=='Pending' %}selected{% endif %}>Pending</option>
+          <option value="Paid" {% if s['fee_status']=='Paid' %}selected{% endif %}>Paid</option>
+          <option value="Partiallypaid" {% if s['fee_status']=='Partiallypaid' %}selected{% endif %}>Partially Paid</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Update Photo</label>
+        <input class="form-control" type="file" name="image" accept=".png,.jpg,.jpeg">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-save"></i> Save Changes</button>
+  </form>
+</div>
+{% endblock %}

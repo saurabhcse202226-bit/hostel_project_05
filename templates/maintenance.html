@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-tools" style="color:var(--accent);margin-right:8px;"></i>Maintenance Requests</h1></div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Report Maintenance Issue</div></div>
+  <form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="g3">
+      {% if session.role == 'student' %}
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Issue Description</label><textarea class="form-control" name="issue" rows="3" placeholder="Describe the maintenance issue" required></textarea></div>
+      <div class="form-group"><label class="form-label">Location / Room</label><input class="form-control" name="location" placeholder="Your room no or location" required></div>
+      <div class="form-group"><label class="form-label">Priority</label><select class="form-select" name="priority"><option value="Low">Low</option><option value="Normal" selected>Normal</option><option value="High">High</option><option value="Urgent">Urgent</option></select></div>
+      {% elif session.role == 'caretaker' %}
+      <div class="form-group" style="grid-column:1/-1;"><label class="form-label">Issue Description</label><textarea class="form-control" name="issue" rows="3" placeholder="Describe the maintenance issue" required></textarea></div>
+      <div class="form-group"><label class="form-label">Student Reg No / Location</label><input class="form-control" name="student_reg" placeholder="Leave blank if general"></div>
+      <div class="form-group"><label class="form-label">Location / Room</label><input class="form-control" name="location" placeholder="Specific location" required></div>
+      <div class="form-group"><label class="form-label">Priority</label><select class="form-select" name="priority"><option value="Low">Low</option><option value="Normal" selected>Normal</option><option value="High">High</option><option value="Urgent">Urgent</option></select></div>
+      {% endif %}
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-send"></i> Submit Request</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-hd"><div class="card-title">Maintenance Requests</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Issue</th><th>Location</th><th>Priority</th><th>Status</th><th>Date</th>{% if session.role in ['warden', 'principal'] %}<th>Remark</th><th>Action</th>{% endif %}</tr></thead>
+      <tbody>
+        {% for m in requests %}
+        <tr>
+          <td>{{ m['id'] }}</td>
+          <td><strong>{{ m['issue'] }}</strong></td>
+          <td>{{ m['location'] }}</td>
+          <td><span class="badge {% if m['priority']=='Urgent' %}bg-danger{% elif m['priority']=='High' %}bg-warning{% else %}bg-secondary{% endif %}">{{ m['priority'] }}</span></td>
+          <td><span class="badge {% if m['status']=='Resolved' %}bg-success{% elif m['status']=='Forwarded' %}bg-info{% elif m['status']=='Under Process' %}bg-blue{% else %}bg-secondary{% endif %}">{{ m['status'] }}</span></td>
+          <td style="font-size:12px;color:var(--muted);">{{ m['created_at'][:10] }}</td>
+          {% if session.role in ['warden', 'principal'] %}
+          <td><span class="truncate" title="{{ m['remark'] or '' }}">{{ m['remark'] or '—' }}</span></td>
+          <td>
+            <form method="POST" style="display:flex;gap:4px;align-items:center;">
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="maint_id" value="{{ m['id'] }}">
+              {% if session.role == 'warden' %}
+              <select name="status" class="form-select form-select-sm" style="min-width:140px;">
+                <option value="Under Process">Under Process</option>
+                <option value="Forwarded">Forwarded</option>
+              </select>
+              {% elif session.role == 'principal' %}
+              <select name="status" class="form-select form-select-sm" style="min-width:140px;">
+                <option value="Under Process">Under Process</option>
+                <option value="Forwarded">Forwarded</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+              {% endif %}
+              <input type="text" name="remark" class="form-control form-control-sm" placeholder="Remark" style="min-width:100px;">
+              <button class="btn btn-sm btn-primary"><i class="bi bi-check"></i></button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}<tr><td colspan="{% if session.role in ['warden', 'principal'] %}8{% else %}6{% endif %}" style="color:var(--muted);text-align:center;padding:24px;">No maintenance requests.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

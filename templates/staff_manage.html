@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-people-fill" style="color:var(--accent);margin-right:8px;"></i>Staff Management</h1>
+</div>
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Total Staff</div><div class="stat-value">{{ stats['total'] }}</div><i class="bi bi-people stat-icon"></i></div>
+  <div class="stat-card green"><div class="stat-label">Active</div><div class="stat-value">{{ stats['active'] }}</div><i class="bi bi-check-circle stat-icon"></i></div>
+  <div class="stat-card yellow"><div class="stat-label">Inactive</div><div class="stat-value">{{ stats['inactive'] }}</div><i class="bi bi-pause-circle stat-icon"></i></div>
+</div>
+
+<!-- Add Staff -->
+<div class="card mb-16">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-person-plus" style="color:var(--green);margin-right:6px;"></i>Add New Staff Member</div>
+  </div>
+  <form method="POST">
+    <input type="hidden" name="action" value="add">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" name="name" placeholder="Staff member name" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-select" name="role" required>
+          <option value="">Select Role</option>
+          <option value="Cook">Cook</option>
+          <option value="Sweeper">Sweeper</option>
+          <option value="Guard">Guard</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Gardener">Gardener</option>
+          <option value="Electrician">Electrician</option>
+          <option value="Plumber">Plumber</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile</label>
+        <input class="form-control" name="mobile" placeholder="Contact mobile">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" name="email" type="email" placeholder="Email address">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-control" name="address" placeholder="Residential address">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aadhar No</label>
+        <input class="form-control" name="aadhar_no" placeholder="12-digit Aadhar">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <select class="form-select" name="blood_group">
+          <option value="">Select Blood Group</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Joining Date</label>
+        <input class="form-control" name="joining_date" type="date">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-plus"></i> Add Staff Member</button>
+  </form>
+</div>
+
+<!-- Staff List -->
+<div class="card">
+  <div class="card-hd">
+    <div class="card-title"><i class="bi bi-table" style="color:var(--accent);margin-right:6px;"></i>Staff List</div>
+    <input type="text" class="form-control form-control-sm" style="width:200px;" placeholder="Quick filter…" data-table-filter="staffTable">
+  </div>
+  <div class="table-wrap">
+    <table id="staffTable">
+      <thead>
+        <tr><th>Name</th><th>Role</th><th>Mobile</th><th>Email</th><th>Aadhar</th><th>Blood Group</th><th>Joining Date</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for s in staff %}
+        <tr>
+          <td><strong>{{ s['name'] }}</strong></td>
+          <td>{{ s['role'] }}</td>
+          <td>{{ s['mobile'] or '—' }}</td>
+          <td>{{ s['email'] or '—' }}</td>
+          <td><code style="font-size:11px;">{{ s['aadhar_no'][-4:] if s['aadhar_no'] else '—' }}</code></td>
+          <td>{{ s['blood_group'] or '—' }}</td>
+          <td style="font-size:12px;color:var(--muted);">{{ s['joining_date'] or '—' }}</td>
+          <td>
+            <form method="POST" style="display:flex;align-items:center;gap:6px;">
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="staff_id" value="{{ s['id'] }}">
+              <select name="status" class="form-select form-select-sm" style="min-width:100px;" onchange="this.form.submit()">
+                <option value="Active" {% if s['status']=='Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if s['status']=='Inactive' %}selected{% endif %}>Inactive</option>
+              </select>
+            </form>
+          </td>
+          <td>
+            <a href="{{ url_for('staff_delete', staff_id=s['id']) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Remove staff member?')"><i class="bi bi-trash3"></i></a>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px;">No staff members added yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

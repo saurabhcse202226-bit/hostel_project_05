@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set can_edit = (session.role == 'warden') %}
+{% set can_upload = (session.role == 'warden' or session.role == 'caretaker') %}
+{% set is_student = (session.role == 'student') %}
+<div class="page-header">
+  <h1><i class="bi bi-receipt" style="color:var(--accent);margin-right:8px;"></i>{% if is_student %}My Monthly Charges{% else %}Monthly Student Charges{% endif %}</h1>
+</div>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>
+  {% endif %}
+{% endwith %}
+{% if not can_edit and not is_student %}
+  <div class="alert alert-info"><i class="bi bi-eye"></i>Row edit is warden-only. Upload is allowed for warden/caretaker.</div>
+{% endif %}
+{% if is_student %}
+  <div class="alert alert-info"><i class="bi bi-eye"></i>You can view your monthly charges here.</div>
+{% endif %}
+
+<div class="stats-grid">
+  <div class="stat-card blue"><div class="stat-label">Students</div><div class="stat-value">{{ stats['student_count'] }}</div></div>
+  <div class="stat-card green"><div class="stat-label">Paid</div><div class="stat-value">{{ stats['paid_count'] }}</div></div>
+  <div class="stat-card yellow"><div class="stat-label">Pending</div><div class="stat-value">{{ stats['pending_count'] }}</div></div>
+  <div class="stat-card teal"><div class="stat-label">Total Due</div><div class="stat-value">₹{{ stats['total_due'] }}</div></div>
+</div>
+
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title">Month & Excel Upload</div></div>
+  <div class="g2">
+    <form method="GET">
+      <div class="form-group">
+        <label class="form-label">Selected Month</label>
+        <input type="month" name="month" class="form-control" value="{{ selected_month }}" required>
+      </div>
+      <button class="btn btn-primary btn-sm"><i class="bi bi-funnel"></i> Apply Month</button>
+    </form>
+    {% if can_upload %}
+    <form method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="bulk_upload">
+      <div class="form-group">
+        <label class="form-label">Upload CSV / XLSX</label>
+        <input type="file" name="sheet" class="form-control" accept=".csv,.xlsx" required>
+        <small class="text-muted">Columns: reg_no, hostel_maintenance, mess_charge, fine, status, note</small>
+      </div>
+      <input type="hidden" name="month" value="{{ selected_month }}">
+      <button class="btn btn-success btn-sm"><i class="bi bi-upload"></i> Upload Sheet</button>
+    </form>
+    {% elif not is_student %}
+    <div class="card" style="padding:14px;">
+      <div class="text-muted">Upload disabled for this role.</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if can_edit %}
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title">Month-wise Bulk Charges</div></div>
+  <p class="text-muted mb-12">Selected month ke active students par ek saath charges apply karein.</p>
+  <form method="POST">
+    <input type="hidden" name="action" value="apply_month_defaults">
+    <div class="g3">
+      <div class="form-group">
+        <label class="form-label">Month</label>
+        <input type="month" name="month" class="form-control" value="{{ selected_month }}" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hostel + Maintenance</label>
+        <input type="number" name="hostel_maintenance_default" class="form-control" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mess Fee (optional)</label>
+        <input type="number" name="mess_charge_default" class="form-control" step="0.01" placeholder="Blank = student's mess fee">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fine</label>
+        <input type="number" name="fine_default" class="form-control" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Concession / Discount</label>
+        <input type="number" name="concession_default" class="form-control" step="0.01" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status_default" class="form-select">
+          <option value="Pending" selected>Pending</option>
+          <option value="Paid">Paid</option>
+          <option value="Partial">Partial</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Note</label>
+        <input type="text" name="note_default" class="form-control" placeholder="Optional note">
+      </div>
+    </div>
+    <div class="d-flex gap-12 align-center mt-8">
+      <label class="remember"><input type="checkbox" name="overwrite_existing" value="1"> Overwrite existing records for this month</label>
+      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-lightning-charge"></i> Apply to All Active Students</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-hd"><div class="card-title">Month: {{ selected_month }}</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th><th>Reg No</th><th>Room</th><th>Mess</th>
+          <th>Hostel + Maintenance</th><th>Mess Charge</th><th>Fine</th><th>Concession</th><th>Total Due</th><th>Status</th>{% if not is_student %}<th>Action</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td><strong>{{ s['name'] }}</strong></td>
+          <td>{{ s['reg_no'] }}</td>
+          <td>{{ s['room_no'] or '—' }}</td>
+          <td>{{ s['mess_name'] or '—' }}</td>
+          <td style="min-width:130px;">
+            {% if is_student %}
+              ₹{{ s['hostel_maintenance'] }}
+            {% else %}
+            <form method="POST" style="display:flex;gap:6px;align-items:center;">
+              <input type="hidden" name="action" value="update_charge">
+              <input type="hidden" name="student_id" value="{{ s['id'] }}">
+              <input type="hidden" name="month" value="{{ selected_month }}">
+              <input type="number" name="hostel_maintenance" class="form-control form-control-sm" step="0.01" value="{{ s['hostel_maintenance'] }}" {% if not can_edit %}disabled{% endif %}>
+            {% endif %}
+          </td>
+          <td style="min-width:110px;">{% if is_student %}₹{{ s['mess_charge'] }}{% else %}<input type="number" name="mess_charge" class="form-control form-control-sm" step="0.01" value="{{ s['mess_charge'] }}" {% if not can_edit %}disabled{% endif %}>{% endif %}</td>
+          <td style="min-width:95px;">{% if is_student %}₹{{ s['fine'] }}{% else %}<input type="number" name="fine" class="form-control form-control-sm" step="0.01" value="{{ s['fine'] }}" {% if not can_edit %}disabled{% endif %}>{% endif %}</td>
+          <td style="min-width:110px;">{% if is_student %}₹{{ s['concession'] }}{% else %}<input type="number" name="concession" class="form-control form-control-sm" step="0.01" value="{{ s['concession'] }}" {% if not can_edit %}disabled{% endif %}>{% endif %}</td>
+          <td><strong>₹{{ s['total'] }}</strong></td>
+          <td>
+            {% if is_student %}
+            <span class="badge {% if s['bill_status']=='Paid' %}bg-success{% elif s['bill_status']=='Partial' %}bg-blue{% else %}bg-warning{% endif %}">{{ s['bill_status'] }}</span>
+            {% else %}
+            <select name="status" class="form-select form-select-sm" {% if not can_edit %}disabled{% endif %}>
+              <option value="Pending" {% if s['bill_status']=='Pending' %}selected{% endif %}>Pending</option>
+              <option value="Paid" {% if s['bill_status']=='Paid' %}selected{% endif %}>Paid</option>
+              <option value="Partial" {% if s['bill_status']=='Partial' %}selected{% endif %}>Partial</option>
+            </select>
+            {% endif %}
+          </td>
+          {% if not is_student %}
+          <td style="min-width:130px;">
+              <input type="text" name="note" class="form-control form-control-sm" placeholder="Note" value="{{ s['note'] }}" {% if not can_edit %}disabled{% endif %}>
+              {% if can_edit %}
+              <button class="btn btn-primary btn-sm mt-8"><i class="bi bi-check2"></i> Save</button>
+              {% else %}
+              <span class="text-muted">Read-only</span>
+              {% endif %}
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{% if is_student %}10{% else %}11{% endif %}" style="color:var(--muted);text-align:center;padding:24px;">{% if is_student %}No monthly charge record found for selected month.{% else %}No active students found.{% endif %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

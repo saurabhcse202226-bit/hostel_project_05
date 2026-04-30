@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header"><h1><i class="bi bi-door-open" style="color:var(--accent);margin-right:8px;"></i>Gate Entry/Exit Log</h1></div>
+{% set can_log = (session.role == 'caretaker' or session.role == 'warden') %}
+
+{% with messages = get_flashed_messages() %}{% if messages %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle-fill"></i>{{ messages[0] }}</div>{% endif %}{% endwith %}
+
+{% if not can_log %}
+<div class="alert alert-info"><i class="bi bi-eye"></i>Read-only view{% if session.role == 'student' %} (only your entries){% endif %}.</div>
+{% endif %}
+
+{% if can_log %}
+<div class="card mb-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-plus-circle" style="color:var(--green);margin-right:6px;"></i>Log Gate Entry/Exit</div></div>
+  <form method="POST">
+    <div class="g3">
+      <div class="form-group"><label class="form-label">Student Reg No</label><input class="form-control" name="student_reg" placeholder="e.g. CSE001" required></div>
+      <div class="form-group"><label class="form-label">Entry Time</label><input class="form-control" name="entry_time" type="datetime-local" required></div>
+      <div class="form-group"><label class="form-label">Exit Time</label><input class="form-control" name="exit_time" type="datetime-local"></div>
+      <div class="form-group"><label class="form-label">Late Entry?</label><select class="form-select" name="is_late"><option value="0">Normal</option><option value="1">Yes, Late Entry (After 22:00)</option></select></div>
+    </div>
+    <button class="btn btn-primary mt-8"><i class="bi bi-plus"></i> Log Entry</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-exclamation-triangle" style="color:var(--red);margin-right:6px;"></i>Late Night Entries</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Reg No</th><th>Room</th><th>Entry Time</th><th>Exit Time</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for l in late_entries %}
+        <tr>
+          <td><strong>{{ l['name'] or '—' }}</strong></td>
+          <td>{{ l['student_reg'] }}</td>
+          <td>{{ l['room_no'] or '—' }}</td>
+          <td>{{ l['entry_time'] or '—' }}</td>
+          <td>{{ l['exit_time'] or '—' }}</td>
+          <td style="font-size:12px;color:var(--muted);">{{ l['created_at'][:10] }}</td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">No late entries recorded.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mt-16">
+  <div class="card-hd"><div class="card-title"><i class="bi bi-check2-circle" style="color:var(--green);margin-right:6px;"></i>Normal Entries</div></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Reg No</th><th>Room</th><th>Entry Time</th><th>Exit Time</th><th>Date</th></tr></thead>
+      <tbody>
+        {% for n in normal_entries %}
+        <tr>
+          <td><strong>{{ n['name'] or '—' }}</strong></td>
+          <td>{{ n['student_reg'] }}</td>
+          <td>{{ n['room_no'] or '—' }}</td>
+          <td>{{ n['entry_time'] or '—' }}</td>
+          <td>{{ n['exit_time'] or '—' }}</td>
+          <td style="font-size:12px;color:var(--muted);">{{ n['created_at'][:10] }}</td>
+        </tr>
+        {% else %}<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px;">No normal entries recorded.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
