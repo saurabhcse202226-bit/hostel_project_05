@@ -164,3 +164,13 @@ def init_db(app) -> None:
             except Exception as exc:
                 # Do not hard-fail app boot on transient DB startup issues.
                 logger.exception("Database auto-create skipped due to startup error: %s", exc)
+def test_db_connection():
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        result = cur.fetchone()
+        conn.close()
+        return True, f"DB CONNECTED  | Result: {result['?column?']}"
+    except Exception as e:
+        return False, f"DB ERROR ❌: {e}"

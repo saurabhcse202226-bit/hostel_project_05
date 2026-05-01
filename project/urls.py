@@ -17,10 +17,16 @@ def register_routes(app: Flask) -> None:
     app.register_blueprint(principal_bp)
     app.register_blueprint(admin_bp)
 
+    # ================= DB TEST ROUTE =================
+    from .database import test_db_connection
+
+    @app.route("/db-test")
+    def db_test():
+        ok, msg = test_db_connection()
+        return msg
+
 
 def register_legacy_endpoint_aliases(app: Flask) -> None:
-    # Backward-compatible endpoint aliases for templates that still use
-    # unqualified endpoint names instead of blueprint-qualified names.
     legacy_endpoints = {
         "student_dashboard": "student.student_dashboard",
         "caretaker_dashboard": "caretaker.caretaker_dashboard",
@@ -63,13 +69,22 @@ def register_legacy_endpoint_aliases(app: Flask) -> None:
         "admin_restore": "admin.admin_restore",
         "logout": "auth.logout",
     }
+
     rules_by_endpoint = {rule.endpoint: rule for rule in app.url_map.iter_rules()}
+
     for alias, actual in legacy_endpoints.items():
         if alias in app.view_functions or actual not in app.view_functions:
             continue
+
         actual_rule = rules_by_endpoint.get(actual)
         if not actual_rule:
             continue
-        methods = sorted(m for m in actual_rule.methods if m not in {"HEAD", "OPTIONS"})
-        app.add_url_rule(actual_rule.rule, endpoint=alias, view_func=app.view_functions[actual], methods=methods)
 
+        methods = sorted(m for m in actual_rule.methods if m not in {"HEAD", "OPTIONS"})
+
+        app.add_url_rule(
+            actual_rule.rule,
+            endpoint=alias,
+            view_func=app.view_functions[actual],
+            methods=methods
+        )
