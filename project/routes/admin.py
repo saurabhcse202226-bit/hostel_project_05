@@ -12,64 +12,63 @@ admin_bp = Blueprint("admin", __name__)
 @login_required(["admin"])
 def admin_tools():
     if request.method == "POST":
-        action = request.form.get("action") or ""
+        action = request.form.get("action", "").strip()
 
-        if action == "reset_student_password":
-            reg_no = (request.form.get("reg_no") or "").strip()
+        try:
+            if action == "reset_student_password":
+                reg_no = request.form.get("reg_no", "").strip()
 
-            if not reg_no:
-                flash("Reg No is required.")
-            else:
-                student = Student.query.filter_by(reg_no=reg_no).first()
+                if not reg_no:
+                    flash("Reg No is required.", "error")
+                else:
+                    student = Student.query.filter_by(reg_no=reg_no).first()
 
-                if student:
-                    student.password_hash = generate_password_hash(reg_no)
-                    db.session.commit()
+                    if student:
+                        student.password_hash = generate_password_hash(reg_no)
 
-                    db.session.add(
-                        AuditLog(
+                        db.session.add(AuditLog(
                             actor_role="admin",
                             actor_user="admin",
                             action="reset_password",
                             entity="student",
                             entity_id=reg_no,
-                            details="",
-                        )
-                    )
-                    db.session.commit()
+                            details="Password reset to Reg No"
+                        ))
 
-                    flash("Student password reset to Reg No.")
+                        db.session.commit()
+                        flash("Student password reset successfully.", "success")
+                    else:
+                        flash("Student not found.", "error")
+
+            elif action == "reset_staff_password":
+                username = request.form.get("username", "").strip()
+                new_password = request.form.get("new_password", "").strip()
+
+                if not username or not new_password:
+                    flash("Username and new password are required.", "error")
                 else:
-                    flash("Student not found.")
+                    staff = StaffUser.query.filter_by(username=username).first()
 
-        elif action == "reset_staff_password":
-            username = (request.form.get("username") or "").strip()
-            new_password = (request.form.get("new_password") or "").strip()
+                    if staff:
+                        staff.password_hash = generate_password_hash(new_password)
 
-            if not username or not new_password:
-                flash("Username and new password are required.")
-            else:
-                staff = StaffUser.query.filter_by(username=username).first()
-
-                if staff:
-                    staff.password_hash = generate_password_hash(new_password)
-                    db.session.commit()
-
-                    db.session.add(
-                        AuditLog(
+                        db.session.add(AuditLog(
                             actor_role="admin",
                             actor_user="admin",
                             action="reset_password",
                             entity="staff",
                             entity_id=username,
-                            details="",
-                        )
-                    )
-                    db.session.commit()
+                            details="Staff password updated"
+                        ))
 
-                    flash("Staff password updated.")
-                else:
-                    flash("Staff not found.")
+                        db.session.commit()
+                        flash("Staff password updated successfully.", "success")
+                    else:
+                        flash("Staff not found.", "error")
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error: {str(e)}", "error")
 
     audit_logs = AuditLog.query.order_by(AuditLog.id.desc()).limit(50).all()
 
@@ -79,42 +78,41 @@ def admin_tools():
 @admin_bp.route("/admin/backup")
 @login_required(["admin"])
 def admin_backup():
-    flash("Backup via file is disabled on PostgreSQL.")
+    flash("Backup via file is disabled on PostgreSQL.", "warning")
     return redirect(url_for("admin.admin_tools"))
 
 
 @admin_bp.route("/admin/restore", methods=["POST"])
 @login_required(["admin"])
 def admin_restore():
-    db.session.add(
-        AuditLog(
+    try:
+        db.session.add(AuditLog(
             actor_role="admin",
             actor_user="admin",
             action="restore",
             entity="database",
             entity_id="postgres",
-            details="restore_attempt_blocked",
-        )
-    )
-    db.session.commit()
+            details="restore_attempt_blocked"
+        ))
+        db.session.commit()
 
-    flash("Restore via .db file is disabled. Use PostgreSQL tools.")
+        flash("Restore via .db file is disabled. Use PostgreSQL tools.", "warning")
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error: {str(e)}", "error")
+
     return redirect(url_for("admin.admin_tools"))
 
 
 @admin_bp.route("/admin/db-view")
 @login_required(["admin"])
 def admin_db_view():
-    # Simple version (no raw SQL)
-    tables = [
-        "students",
-        "staff_users",
-        "audit_logs",
-    ]
-
-    selected_table = request.args.get("table") or "students"
+    tables = ["students", "staff_users", "audit_logs"]
+    selected_table = request.args.get("table", "students")
 
     data = []
+
     if selected_table == "students":
         data = Student.query.limit(100).all()
     elif selected_table == "staff_users":
