@@ -1,7 +1,9 @@
 import csv
 import io
+import json
 import os
 import smtplib
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
@@ -10,10 +12,18 @@ from functools import wraps
 from typing import Any, Iterable
 
 from flask import current_app, make_response, redirect, session, url_for
-from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 
-from .config import FAST2SMS_API_KEY, SMTP_FROM, SMTP_HOST, SMTP_PASS, SMTP_PORT, SMTP_USER
+from .config import (
+    FAST2SMS_API_KEY,
+    FAST2SMS_ROUTE,
+    FAST2SMS_SENDER_ID,
+    SMTP_FROM,
+    SMTP_HOST,
+    SMTP_PASS,
+    SMTP_PORT,
+    SMTP_USER,
+)
 
 
 def login_required(roles: Iterable[str] | None = None):
@@ -138,19 +148,66 @@ def _send_sms_to_parent(mobile: str, message: str) -> tuple[bool, str]:
     if not FAST2SMS_API_KEY:
         return (False, "FAST2SMS_API_KEY not configured")
 
+    endpoint = "https://www.fast2sms.com/dev/bulkV2"
+    payload_dict = {"route": FAST2SMS_ROUTE, "message": message, "numbers": digits}
+    if FAST2SMS_SENDER_ID:
+        payload_dict["sender_id"] = FAST2SMS_SENDER_ID
+
+    def _provider_result(body: str) -> tuple[bool, str]:
+        try:
+            parsed = json.loads(body) if body else {}
+        except json.JSONDecodeError:
+            parsed = {}
+        if isinstance(parsed, dict):
+            if parsed.get("return") is True:
+                return (True, "sent")
+            provider_msg = (
+                parsed.get("message")
+                or parsed.get("request_id")
+                or parsed.get("warning")
+                or "provider rejected request"
+            )
+            return (False, f"sms provider error: {provider_msg}")
+        return (False, "sms provider response unreadable")
+
     try:
-        payload = urllib.parse.urlencode({"route": "q", "message": message, "numbers": digits}).encode()
-        req = urllib.request.Request(
-            "https://www.fast2sms.com/dev/bulkV2",
-            data=payload,
-            headers={"authorization": FAST2SMS_API_KEY, "Content-Type": "application/x-www-form-urlencoded"},
+        # Preferred mode for current Fast2SMS docs: JSON body.
+        req_json = urllib.request.Request(
+            endpoint,
+            data=json.dumps(payload_dict).encode("utf-8"),
+            headers={"authorization": FAST2SMS_API_KEY, "Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req_json, timeout=15) as resp:
             body = resp.read().decode("utf-8", "ignore")
             if resp.status == 200:
-                return (True, "sent")
+                return _provider_result(body)
             return (False, f"sms http {resp.status}: {body[:200]}")
+    except urllib.error.HTTPError as http_err:
+        err_body = ""
+        try:
+            err_body = http_err.read().decode("utf-8", "ignore")
+        except Exception:
+            err_body = ""
+        # Backward-compatible fallback for older account routes expecting form-encoded body.
+        try:
+            payload_form = urllib.parse.urlencode(payload_dict).encode()
+            req_form = urllib.request.Request(
+                endpoint,
+                data=payload_form,
+                headers={"authorization": FAST2SMS_API_KEY, "Content-Type": "application/x-www-form-urlencoded"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req_form, timeout=15) as resp:
+                body = resp.read().decode("utf-8", "ignore")
+                if resp.status == 200:
+                    return _provider_result(body)
+                return (False, f"sms http {resp.status}: {body[:200]}")
+        except Exception as fallback_err:
+            return (
+                False,
+                f"sms error: {type(http_err).__name__}: {http_err}; details: {err_body[:220]}; fallback failed: {type(fallback_err).__name__}: {fallback_err}",
+            )
     except Exception as e:
         return (False, f"sms error: {type(e).__name__}: {e}")
 

@@ -25,13 +25,20 @@ def principal_complaints():
         }
         new_status = status_map.get(action, "Pending")
         cur.execute(
-            "UPDATE complaints SET status=?, resolution=?, resolved_by=?, assigned_to=? WHERE id=?",
+            """
+            UPDATE complaints
+            SET status=?, resolution=?, resolved_by=?, assigned_to=?
+            WHERE id=? AND assigned_to='principal' AND (status='Pending' OR status='Forwarded to Principal')
+            """,
             (new_status, resolution, session["user"], "principal", complaint_id),
         )
-        conn.commit()
-        _log_audit(cur, "update", "complaint", complaint_id, f"status={new_status}")
-        conn.commit()
-        flash("Complaint updated.")
+        if cur.rowcount:
+            conn.commit()
+            _log_audit(cur, "update", "complaint", complaint_id, f"status={new_status}")
+            conn.commit()
+            flash("Complaint updated.")
+        else:
+            flash("Complaint already processed once. Further changes are blocked.")
 
     cur.execute(
         """
@@ -82,31 +89,32 @@ def principal_leaves():
         remark = (request.form.get("remark") or "").strip() or None
         new_status = "Approved" if action == "approve" else "Rejected"
         cur.execute(
-            "UPDATE leaves SET principal_status=?, principal_remark=? WHERE id=?",
+            "UPDATE leaves SET principal_status=?, principal_remark=? WHERE id=? AND principal_status='Pending' AND warden_status='Approved'",
             (new_status, remark, leave_id),
         )
-        conn.commit()
-        _log_audit(cur, "update", "leave", leave_id, f"principal_status={new_status}")
-        conn.commit()
-        if new_status == "Approved":
-            email_ok, email_msg, sms_ok, sms_msg = _notify_leave_approved(cur, leave_id)
-            _log_audit(
-                cur,
-                "notify",
-                "leave",
-                leave_id,
-                f"email={email_ok} ({email_msg}); sms={sms_ok} ({sms_msg})",
-            )
-            conn.commit()
-            flash(
-                f"Leave approved. Email: {'sent' if email_ok else 'failed'}; SMS: {'sent' if sms_ok else 'failed'}.",
-            )
-            if not email_ok:
-                flash(email_msg)
-            if not sms_ok:
-                flash(sms_msg)
+        if not cur.rowcount:
+            flash("Leave decision already taken once. Further changes are blocked.")
         else:
-            flash(f"Leave {new_status.lower()}.")
+            conn.commit()
+            _log_audit(cur, "update", "leave", leave_id, f"principal_status={new_status}")
+            conn.commit()
+            if new_status == "Approved":
+                email_ok, email_msg, sms_ok, sms_msg = _notify_leave_approved(cur, leave_id)
+                _log_audit(
+                    cur,
+                    "notify",
+                    "leave",
+                    leave_id,
+                    f"email={email_ok} ({email_msg}); sms={sms_ok} ({sms_msg})",
+                )
+                conn.commit()
+                flash(f"Leave approved. Email: {'sent' if email_ok else 'failed'}.")
+                if not email_ok:
+                    flash(email_msg)
+                if not sms_ok:
+                    flash("SMS provider currently unavailable, but leave approval is completed.", "warning")
+            else:
+                flash(f"Leave {new_status.lower()}.")
 
     cur.execute(
         """

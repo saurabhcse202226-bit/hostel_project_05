@@ -20,6 +20,9 @@
       </div>
     </div>
 
+    {% if not tables %}
+    <p style="padding:16px;color:var(--muted);font-size:13px;margin:0;">No tables found in this database.</p>
+    {% else %}
     <div class="table-wrap">
       <table>
         <thead>
@@ -31,7 +34,7 @@
           {% for t in tables %}
           <tr>
             <td>
-              <a href="{{ url_for('admin.admin_db_view', table=t) }}">
+              <a href="{{ url_for('admin.admin_db_view', table=t) }}"{% if t == selected_table %} style="font-weight:600;color:var(--accent);"{% endif %}>
                 {{ t }}
               </a>
             </td>
@@ -40,6 +43,7 @@
         </tbody>
       </table>
     </div>
+    {% endif %}
   </div>
 
   <!-- Table Data -->
@@ -47,51 +51,38 @@
     <div class="card-hd">
       <div class="card-title">
         <i class="bi bi-eye" style="color:var(--teal);margin-right:6px;"></i>
-        Preview: <code>{{ selected_table }}</code>
+        Preview{% if selected_table %}: <code>{{ selected_table }}</code><span style="font-size:11px;color:var(--muted);font-weight:normal;">&nbsp;· {{ rows|length }} row(s), max {{ row_limit }}</span>{% endif %}
       </div>
     </div>
 
-    <div class="table-wrap">
+    {% if viewer_error %}
+    <div class="alert alert-warning" style="margin:12px 14px;"><i class="bi bi-exclamation-triangle-fill"></i> {{ viewer_error }}</div>
+    {% elif selected_table %}
+
+    {% if not columns %}
+    <p style="padding:16px;color:gray;text-align:center;">No columns or empty result.</p>
+    {% else %}
+    <div class="table-wrap" style="max-height:65vh;overflow:auto;">
       <table>
         <thead>
           <tr>
-            {% if selected_table == 'students' %}
-              <th>ID</th>
-              <th>Reg No</th>
-              <th>Name</th>
-            {% elif selected_table == 'staff_users' %}
-              <th>ID</th>
-              <th>Username</th>
-            {% elif selected_table == 'audit_logs' %}
-              <th>ID</th>
-              <th>Action</th>
-              <th>Entity</th>
-            {% endif %}
+            {% for c in columns %}
+            <th>{{ c }}</th>
+            {% endfor %}
           </tr>
         </thead>
 
         <tbody>
           {% for r in rows %}
           <tr>
-            {% if selected_table == 'students' %}
-              <td>{{ r.id }}</td>
-              <td>{{ r.reg_no }}</td>
-              <td>{{ r.name }}</td>
-
-            {% elif selected_table == 'staff_users' %}
-              <td>{{ r.id }}</td>
-              <td>{{ r.username }}</td>
-
-            {% elif selected_table == 'audit_logs' %}
-              <td>{{ r.id }}</td>
-              <td>{{ r.action }}</td>
-              <td>{{ r.entity }}</td>
-            {% endif %}
+            {% for c in columns %}
+            <td style="white-space:pre-wrap;word-break:break-word;max-width:320px;font-size:12.5px;">{{ r[c] if r[c] is not none else '' }}</td>
+            {% endfor %}
           </tr>
           {% else %}
           <tr>
-            <td colspan="5" style="text-align:center;color:gray;padding:20px;">
-              No data found.
+            <td colspan="{{ columns|length }}" style="text-align:center;color:gray;padding:20px;">
+              No rows in this table (or limit reached with no matching rows).
             </td>
           </tr>
           {% endfor %}
@@ -99,6 +90,11 @@
 
       </table>
     </div>
+    {% endif %}
+
+    {% else %}
+    <p style="padding:16px;color:var(--muted);">Select a table from the list.</p>
+    {% endif %}
   </div>
 
 </div>

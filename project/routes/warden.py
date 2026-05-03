@@ -27,13 +27,20 @@ def warden_complaints():
         new_status = status_map.get(action, "Pending")
         assigned_to = "principal" if action == "forward" else "warden"
         cur.execute(
-            "UPDATE complaints SET status=?, resolution=?, resolved_by=?, assigned_to=? WHERE id=?",
+            """
+            UPDATE complaints
+            SET status=?, resolution=?, resolved_by=?, assigned_to=?
+            WHERE id=? AND assigned_to='warden' AND status='Pending'
+            """,
             (new_status, resolution, session["user"], assigned_to, complaint_id),
         )
-        conn.commit()
-        _log_audit(cur, "update", "complaint", complaint_id, f"status={new_status}, assigned_to={assigned_to}")
-        conn.commit()
-        flash("Complaint updated.")
+        if cur.rowcount:
+            conn.commit()
+            _log_audit(cur, "update", "complaint", complaint_id, f"status={new_status}, assigned_to={assigned_to}")
+            conn.commit()
+            flash("Complaint updated.")
+        else:
+            flash("Complaint already processed once. Further changes are blocked.")
 
     cur.execute(
         """
@@ -78,13 +85,16 @@ def warden_leaves():
         remark = (request.form.get("remark") or "").strip() or None
         new_status = "Approved" if action == "approve" else "Rejected"
         cur.execute(
-            "UPDATE leaves SET warden_status=?, warden_remark=? WHERE id=?",
+            "UPDATE leaves SET warden_status=?, warden_remark=? WHERE id=? AND warden_status='Pending'",
             (new_status, remark, leave_id),
         )
-        conn.commit()
-        _log_audit(cur, "update", "leave", leave_id, f"warden_status={new_status}")
-        conn.commit()
-        flash(f"Leave {new_status.lower()}.")
+        if cur.rowcount:
+            conn.commit()
+            _log_audit(cur, "update", "leave", leave_id, f"warden_status={new_status}")
+            conn.commit()
+            flash(f"Leave {new_status.lower()}.")
+        else:
+            flash("Leave decision already taken once. Further changes are blocked.")
 
     cur.execute(
         """

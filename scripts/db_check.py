@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import psycopg2
 
@@ -7,14 +8,27 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from project.database import DB_PATH
+from project.database import get_database_url
+
+
+def _mask_database_url(url: str) -> str:
+    parts = urlsplit(url)
+    host = parts.hostname or ""
+    user = parts.username or ""
+    if parts.port:
+        host = f"{host}:{parts.port}"
+    netloc = host
+    if user:
+        netloc = f"{user}:***@{host}"
+    return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
 
 
 def main() -> None:
-    conn = psycopg2.connect(DB_PATH)
+    db_url = get_database_url()
+    conn = psycopg2.connect(db_url)
     cur = conn.cursor()
 
-    print(f"DB_PATH={DB_PATH}")
+    print(f"DATABASE_URL={_mask_database_url(db_url)}")
     cur.execute("SELECT 1")
     print("CONNECTION=OK")
 
@@ -30,7 +44,8 @@ def main() -> None:
     print("TABLES=" + ", ".join(tables))
 
     for table in tables:
-        count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        cur.execute(f'SELECT COUNT(*) FROM "{table}"')
+        count = cur.fetchone()[0]
         print(f"{table}: {count}")
 
     # Show small preview data from key tables
@@ -44,7 +59,8 @@ def main() -> None:
     for table, query in previews.items():
         print(f"\nPREVIEW {table}:")
         try:
-            rows = conn.execute(query).fetchall()
+            cur.execute(query)
+            rows = cur.fetchall()
             if not rows:
                 print("  (no rows)")
                 continue

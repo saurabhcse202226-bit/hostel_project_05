@@ -1,4 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash
 
 from ..database import db
@@ -6,6 +7,35 @@ from ..models import AuditLog, StaffUser, Student
 from ..utils import login_required
 
 admin_bp = Blueprint("admin", __name__)
+
+_DB_ROW_LIMIT = 100
+
+
+def _list_db_tables() -> tuple[list[str], str | None]:
+    insp = inspect(db.engine)
+    dialect = db.engine.dialect.name
+    schema: str | None = None
+    if dialect == "postgresql":
+        schema = "public"
+        raw = insp.get_table_names(schema=schema)
+    elif dialect == "sqlite":
+        raw = [
+            name
+            for name in insp.get_table_names()
+            if not name.startswith("sqlite_")
+        ]
+    else:
+        raw = insp.get_table_names()
+    names = sorted(set(raw))
+    return names, schema
+
+
+def _quote_table_for_select(table_name: str, schema: str | None) -> str:
+    prep = db.engine.dialect.identifier_preparer
+    q = prep.quote(table_name)
+    if schema:
+        q = f"{prep.quote(schema)}.{q}"
+    return q
 
 
 @admin_bp.route("/admin", methods=["GET", "POST"])
@@ -108,21 +138,31 @@ def admin_restore():
 @admin_bp.route("/admin/db-view")
 @login_required(["admin"])
 def admin_db_view():
-    tables = ["students", "staff_users", "audit_logs"]
-    selected_table = request.args.get("table", "students")
+    tables, schema = _list_db_tables()
+    requested = (request.args.get("table") or "").strip()
+    selected_table = requested if requested in tables else (tables[0] if tables else "")
 
-    data = []
+    columns: list[str] = []
+    rows: list[dict] = []
+    viewer_error = None
 
-    if selected_table == "students":
-        data = Student.query.limit(100).all()
-    elif selected_table == "staff_users":
-        data = StaffUser.query.limit(100).all()
-    elif selected_table == "audit_logs":
-        data = AuditLog.query.order_by(AuditLog.id.desc()).limit(100).all()
+    if selected_table:
+        try:
+            fq = _quote_table_for_select(selected_table, schema)
+            stmt = text(f"SELECT * FROM {fq} LIMIT {_DB_ROW_LIMIT}")
+            with db.engine.connect() as conn:
+                result = conn.execute(stmt)
+                columns = list(result.keys())
+                rows = [dict(row) for row in result.mappings().all()]
+        except Exception as e:
+            viewer_error = str(e)
 
     return render_template(
         "admin_db_view.html",
         selected_table=selected_table,
-        rows=data,
+        columns=columns,
+        rows=rows,
         tables=tables,
+        viewer_error=viewer_error,
+        row_limit=_DB_ROW_LIMIT,
     )

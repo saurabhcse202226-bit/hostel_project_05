@@ -19,20 +19,23 @@ def test_notification():
     if request.method == "POST":
         test_email = (request.form.get("email") or "").strip()
         test_mobile = (request.form.get("mobile") or "").strip()
-        student_name = (request.form.get("student_name") or "Student").strip()
+        custom_message = (request.form.get("message") or "").strip()
+        student_name = "Student"
 
         email_body = (
             f"Dear {student_name},\n\n"
             "Your leave is accepted. (Test notification)\n\n"
             "Regards,\nHostel Administration"
         )
-        sms_text = f"Dear Parent, your child {student_name} leave is approved. (Test)"
+        sms_text = custom_message or f"Dear Parent, your child {student_name} leave is approved. (Test)"
 
         email_ok, email_msg = _send_email_notification(test_email, "Leave Approved - Test", email_body)
         sms_ok, sms_msg = _send_sms_to_parent(test_mobile, sms_text)
 
         result = {"email_ok": email_ok, "email_msg": email_msg, "sms_ok": sms_ok, "sms_msg": sms_msg}
         flash(f"Test result: email={'yes' if email_ok else 'no'}, sms={'yes' if sms_ok else 'no'}")
+        if not sms_ok:
+            flash("SMS provider currently unavailable. This does not affect core leave flow.", "warning")
 
     return render_template("test_notification.html", result=result)
 

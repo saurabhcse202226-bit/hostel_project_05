@@ -440,11 +440,14 @@ def caretaker_complaints():
         status = request.form.get("status") or "Pending"
         resolution = (request.form.get("resolution") or "").strip() or None
         cur.execute(
-            "UPDATE complaints SET status=?, resolution=?, resolved_by=? WHERE id=?",
+            "UPDATE complaints SET status=?, resolution=?, resolved_by=? WHERE id=? AND status='Pending'",
             (status, resolution, session["user"], complaint_id),
         )
-        conn.commit()
-        flash("Complaint updated.")
+        if cur.rowcount:
+            conn.commit()
+            flash("Complaint updated.")
+        else:
+            flash("Complaint already processed once. Further changes are blocked.")
 
     cur.execute(
         """

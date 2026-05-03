@@ -13,6 +13,11 @@ __pycache__/
 # Database
 *.db
 
+# Runtime uploads/log caches
+static/uploads/*
+!static/uploads/.gitkeep
+.pytest_cache/
+
 # OS / editor
 .DS_Store
 Thumbs.db

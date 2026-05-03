@@ -17,5 +17,8 @@ SMTP_FROM: str = os.environ.get("SMTP_FROM", "") or SMTP_USER
 
 # Fast2SMS (SMS) configuration
 # For Fast2SMS, `authorization` header value is typically the API key itself.
-FAST2SMS_API_KEY: str = os.environ.get("FAST2SMS_API_KEY", "")
+# Keep a fallback for typo-ed env name used by some deployments.
+FAST2SMS_API_KEY: str = os.environ.get("FAST2SMS_API_KEY", "") or os.environ.get("FAS2SMS_API_KEY", "")
+FAST2SMS_ROUTE: str = os.environ.get("FAST2SMS_ROUTE", "q").strip() or "q"
+FAST2SMS_SENDER_ID: str = os.environ.get("FAST2SMS_SENDER_ID", "").strip()
 

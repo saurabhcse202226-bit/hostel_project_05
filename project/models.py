@@ -27,7 +27,7 @@ class Student(db.Model):
     father_name = db.Column(db.Text)
     father_mobile = db.Column(db.Text)
     fee_status = db.Column(db.Text, default="Pending", server_default="Pending")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
     password_hash = db.Column(db.Text)
     is_deleted = db.Column(db.Integer, default=0, server_default="0")
     is_active = db.Column(db.Integer, default=1, server_default="1")
@@ -43,7 +43,7 @@ class StaffUser(db.Model):
     username = db.Column(db.Text, unique=True)
     password_hash = db.Column(db.Text)
     role = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class Leave(db.Model):
@@ -60,7 +60,7 @@ class Leave(db.Model):
     principal_status = db.Column(db.Text)
     warden_remark = db.Column(db.Text)
     principal_remark = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class Complaint(db.Model):
@@ -73,7 +73,7 @@ class Complaint(db.Model):
     status = db.Column(db.Text)
     resolution = db.Column(db.Text)
     resolved_by = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
     assigned_to = db.Column(db.Text, default="warden", server_default="warden")
 
 
@@ -83,7 +83,7 @@ class Notice(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.Text)
     message = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
     posted_by = db.Column(db.Text)
     attachment = db.Column(db.Text)
 
@@ -97,18 +97,7 @@ class Room(db.Model):
     floor_no = db.Column(db.Text)
     room_no = db.Column(db.Text)
     total_beds = db.Column(db.Integer, default=4, server_default="4")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
-
-
-class MessBill(db.Model):
-    __tablename__ = "mess_bills"
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    student_id = db.Column(db.Integer)
-    month = db.Column(db.Text)
-    amount = db.Column(db.Float)
-    status = db.Column(db.Text, default="Pending", server_default="Pending")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class StudentMonthlyCharge(db.Model):
@@ -125,8 +114,8 @@ class StudentMonthlyCharge(db.Model):
     status = db.Column(db.Text, default="Pending", server_default="Pending")
     note = db.Column(db.Text)
     source_file = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
-    updated_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
+    updated_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
     concession = db.Column(db.Float, default=0, server_default="0")
 
 
@@ -138,7 +127,7 @@ class HostelFee(db.Model):
     amount = db.Column(db.Float)
     description = db.Column(db.Text)
     is_active = db.Column(db.Integer, default=1, server_default="1")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class Visitor(db.Model):
@@ -152,7 +141,7 @@ class Visitor(db.Model):
     visit_date = db.Column(db.Text)
     check_in = db.Column(db.Text)
     check_out = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class Maintenance(db.Model):
@@ -165,31 +154,7 @@ class Maintenance(db.Model):
     priority = db.Column(db.Text, default="Normal", server_default="Normal")
     status = db.Column(db.Text, default="Pending", server_default="Pending")
     remark = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
-
-
-class Announcement(db.Model):
-    __tablename__ = "announcements"
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    title = db.Column(db.Text)
-    content = db.Column(db.Text)
-    priority = db.Column(db.Text, default="Normal", server_default="Normal")
-    target_audience = db.Column(db.Text, default="All", server_default="All")
-    posted_by = db.Column(db.Text)
-    is_active = db.Column(db.Integer, default=1, server_default="1")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
-
-
-class RoomInspection(db.Model):
-    __tablename__ = "room_inspection"
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    room_id = db.Column(db.Integer)
-    inspection_date = db.Column(db.Text)
-    cleanliness_score = db.Column(db.Integer)
-    remarks = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class HostelRule(db.Model):
@@ -199,7 +164,7 @@ class HostelRule(db.Model):
     rule_text = db.Column(db.Text)
     category = db.Column(db.Text)
     is_active = db.Column(db.Integer, default=1, server_default="1")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
     posted_by = db.Column(db.Text)
 
 
@@ -211,7 +176,7 @@ class GateLog(db.Model):
     entry_time = db.Column(db.Text)
     exit_time = db.Column(db.Text)
     is_late = db.Column(db.Integer, default=0, server_default="0")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class Mess(db.Model):
@@ -225,7 +190,7 @@ class Mess(db.Model):
     monthly_fee = db.Column(db.Float, default=0, server_default="0")
     capacity = db.Column(db.Integer, default=100, server_default="100")
     status = db.Column(db.Text, default="Active", server_default="Active")
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class StaffMember(db.Model):
@@ -242,7 +207,7 @@ class StaffMember(db.Model):
     joining_date = db.Column(db.Text)
     status = db.Column(db.Text, default="Active", server_default="Active")
     managed_by = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
 
 
 class AuditLog(db.Model):
@@ -255,4 +220,4 @@ class AuditLog(db.Model):
     entity = db.Column(db.Text)
     entity_id = db.Column(db.Text)
     details = db.Column(db.Text)
-    created_at = db.Column(db.Text, server_default=db.text("CURRENT_TIMESTAMP"))
+    created_at = db.Column(db.Text, server_default=db.text("CAST (CURRENT_TIMESTAMP AS TEXT)"))
