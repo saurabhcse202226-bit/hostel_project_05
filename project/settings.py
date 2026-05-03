@@ -15,9 +15,5 @@ class Settings:
         "UPLOAD_FOLDER",
         os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static", "uploads")),
     )
-    DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-    if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL is required. SQLite fallback has been removed.")
-    if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+   
 

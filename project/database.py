@@ -21,15 +21,19 @@ class DBIntegrityError(Exception):
     """Compatibility error used by existing route code."""
 
 
+
+
 def get_database_url() -> str:
-    db_url = Settings.DATABASE_URL or os.getenv("DATABASE_URL", "").strip()
+    db_url = os.getenv("DATABASE_URL", "").strip()
+
     if not db_url:
         raise RuntimeError("DATABASE_URL is required.")
-    # Render provides postgres://, SQLAlchemy expects postgresql://
+
+    # Render kabhi postgres:// deta hai
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
-    return db_url
 
+    return db_url
 
 class CompatCursor:
     """DB-API compatibility cursor backed by SQLAlchemy engine connection."""
